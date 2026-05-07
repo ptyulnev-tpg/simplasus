@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pegasus — Dummy Orders</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --bg-base:      #0d1321;
+            --bg-mid:       #111827;
+            --glass:        rgba(255,255,255,0.04);
+            --glass-hover:  rgba(255,255,255,0.07);
+            --glass-border: rgba(255,255,255,0.09);
+            --glass-strong: rgba(255,255,255,0.10);
+            --text:         #f0f4ff;
+            --muted:        #8b9fc4;
+            --subtle:       #4d6082;
+            --accent:       #6366f1;
+            --accent-2:     #8b5cf6;
+            --accent-glow:  rgba(99,102,241,0.35);
+            --ok:           #34d399;
+            --ok-glow:      rgba(52,211,153,0.25);
+            --err:          #f87171;
+            --err-glow:     rgba(248,113,113,0.25);
+            --warn-border:  rgba(248,113,113,0.4);
+            --orb-a:        rgba(99,102,241,0.18);
+            --orb-b:        rgba(139,92,246,0.14);
+            --orb-c:        rgba(34,211,238,0.10);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-base);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ── Animated background ── */
+        .bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 10% 15%, var(--orb-a) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 70% at 90% 80%, var(--orb-b) 0%, transparent 65%),
+                radial-gradient(ellipse 50% 50% at 50% 50%, var(--orb-c) 0%, transparent 70%),
+                linear-gradient(160deg, #0d1321 0%, #111827 50%, #0f172a 100%);
+            animation: bgShift 18s ease-in-out infinite alternate;
+        }
+        @keyframes bgShift {
+            0%   { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(25deg); }
+        }
+
+        /* ── App shell ── */
+        .app-shell {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            width: 220px;
+            flex-shrink: 0;
+            background: rgba(0,0,0,0.35);
+            border-right: 1px solid var(--glass-border);
+            backdrop-filter: blur(24px) saturate(160%);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 0 2rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0 1.1rem 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 1rem;
+        }
+        .sidebar-brand-icon {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            box-shadow: 0 0 14px var(--accent-glow);
+            flex-shrink: 0;
+        }
+        .sidebar-brand-text {
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            background: linear-gradient(90deg, #e0e7ff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+        .sidebar-section-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--subtle);
+            padding: 0 1.1rem;
+            margin-bottom: 0.4rem;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.55rem 1.1rem;
+            font-size: 0.84rem;
+            font-weight: 500;
+            color: var(--muted);
+            text-decoration: none;
+            border-radius: 0;
+            transition: background 0.15s, color 0.15s;
+            border-left: 3px solid transparent;
+        }
+        .nav-item:hover {
+            background: var(--glass-hover);
+            color: var(--text);
+        }
+        .nav-item.active {
+            background: rgba(99,102,241,0.12);
+            color: #c7d2fe;
+            border-left-color: var(--accent);
+        }
+        .nav-item-icon {
+            font-size: 1rem;
+            flex-shrink: 0;
+            width: 1.2rem;
+            text-align: center;
+        }
+
+        /* ── Main content ── */
+        .main-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* ── Layout ── */
+        .page {
+            position: relative;
+            max-width: 58rem;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 4rem;
+        }
+
+        /* ── Header ── */
+        .site-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .brand-icon {
+            width: 2.4rem;
+            height: 2.4rem;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            box-shadow: 0 0 18px var(--accent-glow);
+            flex-shrink: 0;
+        }
+        .brand-text h1 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #e0e7ff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .brand-text p {
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-top: 0.1rem;
+        }
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 99px;
+            padding: 0.35rem 0.9rem;
+            font-size: 0.78rem;
+            color: var(--muted);
+            backdrop-filter: blur(12px);
+        }
+        .status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .status-dot.ok  { background: var(--ok);  box-shadow: 0 0 6px var(--ok-glow); }
+        .status-dot.err { background: var(--err); box-shadow: 0 0 6px var(--err-glow); }
+
+        /* ── Glass card ── */
+        .glass-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+            backdrop-filter: blur(24px) saturate(160%);
+            box-shadow:
+                0 2px 0 rgba(255,255,255,0.04) inset,
+                0 8px 32px rgba(0,0,0,0.28);
+            transition: border-color 0.2s;
+        }
+        .glass-card:hover { border-color: rgba(255,255,255,0.14); }
+
+        .card-title {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--subtle);
+            margin-bottom: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card-title::before {
+            content: '';
+            display: inline-block;
+            width: 3px; height: 12px;
+            border-radius: 2px;
+            background: linear-gradient(180deg, var(--accent), var(--accent-2));
+        }
+
+        /* ── Warn banner ── */
+        .warn-banner {
+            background: rgba(248,113,113,0.06);
+            border: 1px solid var(--warn-border);
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            font-size: 0.84rem;
+            color: #fca5a5;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            backdrop-filter: blur(12px);
+        }
+        .warn-banner code {
+            background: rgba(255,255,255,0.08);
+            border-radius: 4px;
+            padding: 0.05em 0.35em;
+            font-size: 0.82em;
+        }
+
+        /* ── Form elements ── */
+        .field + .field { margin-top: 1.1rem; }
+        .field label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--muted);
+            margin-bottom: 0.45rem;
+            letter-spacing: 0.01em;
+        }
+        .field input {
+            width: 100%;
+            max-width: 30rem;
+            padding: 0.6rem 0.85rem;
+            border-radius: 9px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(0,0,0,0.25);
+            color: var(--text);
+            font-size: 0.92rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+        .field input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .field input::placeholder { color: var(--subtle); }
+        .field input:disabled { opacity: 0.4; cursor: not-allowed; }
+        .field input[type="number"] { max-width: 9rem; }
+        .field-hint {
+            font-size: 0.75rem;
+            color: var(--subtle);
+            margin-top: 0.35rem;
+        }
+        .field-hint code {
+            background: rgba(255,255,255,0.06);
+            border-radius: 3px;
+            padding: 0.05em 0.3em;
+            font-size: 0.9em;
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+            font-family: inherit;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            transition: all 0.18s;
+            letter-spacing: 0.01em;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #fff;
+            box-shadow: 0 4px 14px var(--accent-glow);
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px var(--accent-glow);
+        }
+        .btn-primary:active:not(:disabled) { transform: translateY(0); }
+        .btn-ghost {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--muted);
+            backdrop-filter: blur(8px);
+        }
+        .btn-ghost:hover:not(:disabled) {
+            border-color: var(--accent);
+            color: #c7d2fe;
+            background: rgba(99,102,241,0.1);
+        }
+        .btn-sm { padding: 0.38rem 0.8rem; font-size: 0.8rem; border-radius: 7px; }
+        .btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none !important; }
+
+        /* ── Tabs ── */
+        .tab-bar {
+            display: flex;
+            gap: 0.25rem;
+            background: rgba(0,0,0,0.25);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 0.25rem;
+            width: fit-content;
+            margin-bottom: 1.5rem;
+        }
+        .tab-btn {
+            padding: 0.45rem 1.1rem;
+            font-size: 0.84rem;
+            font-weight: 500;
+            font-family: inherit;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            background: transparent;
+            color: var(--muted);
+            transition: all 0.18s;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #fff;
+            box-shadow: 0 2px 10px var(--accent-glow);
+        }
+        .tab-btn:hover:not(.active) { color: var(--text); background: var(--glass-hover); }
+
+        #manual-mode, #product-mode { display: none; }
+        #manual-mode.visible, #product-mode.visible { display: block; }
+
+        /* ── Product list ── */
+        .search-row {
+            display: flex;
+            gap: 0.6rem;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .search-row .search-input {
+            flex: 1;
+            min-width: 12rem;
+            max-width: 22rem;
+            padding: 0.55rem 0.85rem 0.55rem 2.4rem;
+            border-radius: 9px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(0,0,0,0.25);
+            color: var(--text);
+            font-size: 0.88rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234d6082' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 0.75rem center;
+        }
+        .search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .search-input::placeholder { color: var(--subtle); }
+        .search-input:disabled { opacity: 0.4; }
+
+        .product-list-wrap {
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            background: rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .product-list-wrap.hidden { display: none; }
+
+        .product-list { max-height: 20rem; overflow-y: auto; }
+        .product-list::-webkit-scrollbar { width: 5px; }
+        .product-list::-webkit-scrollbar-track { background: transparent; }
+        .product-list::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 99px;
+        }
+
+        .product-row {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 0.84rem;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+        .product-row:last-child { border-bottom: none; }
+        .product-row:hover { background: rgba(99,102,241,0.07); }
+        .product-row input[type="checkbox"] {
+            width: 15px; height: 15px;
+            accent-color: var(--accent);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .product-sku {
+            font-family: 'SF Mono', ui-monospace, monospace;
+            color: var(--text);
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.82rem;
+        }
+        .product-ean {
+            font-family: 'SF Mono', ui-monospace, monospace;
+            color: var(--subtle);
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+        .product-stock {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--ok);
+            background: rgba(52,211,153,0.1);
+            border: 1px solid rgba(52,211,153,0.2);
+            border-radius: 99px;
+            padding: 0.1rem 0.55rem;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .product-list-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.55rem 1rem;
+            font-size: 0.76rem;
+            color: var(--subtle);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.15);
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* ── Selection toolbar ── */
+        .selection-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-top: 0.85rem;
+            flex-wrap: wrap;
+        }
+        .selection-toolbar .sep {
+            color: var(--subtle);
+            font-size: 0.8rem;
+        }
+        .selected-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));
+            border: 1px solid rgba(99,102,241,0.35);
+            border-radius: 99px;
+            padding: 0.2rem 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #a5b4fc;
+        }
+
+        /* ── Progress section ── */
+        .progress-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.6rem;
+        }
+        .progress-track {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        progress[id="batch-progress"] {
+            display: none; /* replaced by custom */
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            border-radius: 99px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 8px var(--accent-glow);
+            width: 0%;
+        }
+        #progress-text {
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+
+        /* ── Log ── */
+        .log-wrap {
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            background: rgba(0,0,0,0.3);
+            overflow: hidden;
+            margin-top: 0.75rem;
+        }
+        .log-titlebar {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 0.85rem;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .log-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .log-dot:nth-child(1) { background: #ff5f57; }
+        .log-dot:nth-child(2) { background: #febc2e; }
+        .log-dot:nth-child(3) { background: #28c840; }
+        #log {
+            font-family: 'SF Mono', ui-monospace, monospace;
+            font-size: 0.75rem;
+            max-height: 16rem;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            padding: 0.85rem 1rem;
+            background: transparent;
+        }
+        #log::-webkit-scrollbar { width: 5px; }
+        #log::-webkit-scrollbar-track { background: transparent; }
+        #log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 99px; }
+        .line-ok  { color: var(--ok); }
+        .line-err { color: var(--err); }
+
+        /* ── Divider ── */
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
+            margin: 1.25rem 0;
+        }
+
+        /* ── Grid layout for top cards ── */
+        .top-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+        @media (max-width: 640px) {
+            .top-grid { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="bg-canvas"></div>
+
+<div class="app-shell">
+
+    <!-- Sidebar -->
+    {{ include('_sidebar.html.twig') }}
+
+    <div class="main-content">
+<div class="page">
+
+    <!-- Header -->
+    <header class="site-header">
+        <div class="brand-text">
+            <h1>Test-Order Erstellung</h1>
+            <p>Retailer Order API Dashboard</p>
+        </div>
+        <div class="status-pill">
+            <span class="status-dot {{ pegasusConfigured ? 'ok' : 'err' }}"></span>
+            {{ pegasusConfigured ? 'API verbunden' : 'API nicht konfiguriert' }}
+        </div>
+    </header>
+
+    {% if not pegasusConfigured %}
+        <div class="warn-banner">
+            <span>⚠</span>
+            <span>Bitte <code>PEGASUS_API_BASE</code> in <code>.env.local</code> setzen, damit Orders erstellt werden können.</span>
+        </div>
+    {% endif %}
+
+    <!-- Top grid: Credentials + DB Status -->
+    <div class="top-grid">
+        <!-- Credentials -->
+        <div class="glass-card">
+            <div class="card-title">Zugangsdaten</div>
+            <div class="field">
+                <label for="api-user">API-Benutzer (E-Mail)</label>
+                <input type="text" id="api-user"
+                       value="{{ defaultApiUser|e('html_attr') }}"
+                       autocomplete="username"
+                       {% if not pegasusConfigured %}disabled{% endif %}
+                       placeholder="user@example.com">
+                <div class="field-hint">Fallback: <code>PEGASUS_API_USER</code></div>
+            </div>
+            <div class="field">
+                <label for="api-secret">API-Secret / Passwort</label>
+                <input type="password" id="api-secret"
+                       autocomplete="current-password"
+                       {% if not pegasusConfigured %}disabled{% endif %}
+                       placeholder="••••••••">
+                <div class="field-hint">Fallback: <code>PEGASUS_API_SECRET</code></div>
+            </div>
+        </div>
+
+        <!-- DB / Config status -->
+        <div class="glass-card">
+            <div class="card-title">Konfiguration</div>
+            <div style="display:flex;flex-direction:column;gap:0.7rem;margin-top:0.25rem;">
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.84rem;">
+                    <span style="color:var(--muted);">Pegasus API</span>
+                    <span style="display:flex;align-items:center;gap:0.4rem;font-weight:500;color:{{ pegasusConfigured ? 'var(--ok)' : 'var(--err)' }};">
+                        <span class="status-dot {{ pegasusConfigured ? 'ok' : 'err' }}"></span>
+                        {{ pegasusConfigured ? 'Aktiv' : 'Fehlt' }}
+                    </span>
+                </div>
+                <div style="height:1px;background:var(--glass-border);"></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:0.84rem;">
+                    <span style="color:var(--muted);">Middleware DB</span>
+                    <span style="display:flex;align-items:center;gap:0.4rem;font-weight:500;color:{{ dbConfigured ? 'var(--ok)' : 'var(--err)' }};">
+                        <span class="status-dot {{ dbConfigured ? 'ok' : 'err' }}"></span>
+                        {{ dbConfigured ? 'Verbunden' : 'Fehlt' }}
+                    </span>
+                </div>
+                <div style="height:1px;background:var(--glass-border);"></div>
+                <div style="font-size:0.75rem;color:var(--subtle);line-height:1.5;margin-top:0.15rem;">
+                    Formular-Eingaben überschreiben <code style="background:rgba(255,255,255,0.06);border-radius:3px;padding:0.05em 0.3em;">.env.local</code> pro Aufruf.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mode Panel -->
+    <div class="glass-card">
+        <div class="card-title">Order-Erstellung</div>
+
+        <div class="tab-bar">
+            <button class="tab-btn active" id="tab-products" type="button">Vorrätige Produkte</button>
+            <button class="tab-btn" id="tab-manual" type="button">Manuell (SKU/EAN)</button>
+        </div>
+
+        <!-- Product picker -->
+        <div id="product-mode" class="visible">
+            {% if not dbConfigured %}
+                <div class="warn-banner" style="margin-bottom:1rem;">
+                    <span>⚠</span>
+                    <span>DB nicht konfiguriert. Bitte <code>PEGASUS_STAGING_DB_*</code> in <code>.env.local</code> setzen.</span>
+                </div>
+            {% endif %}
+
+            <div class="search-row">
+                <input type="text" class="search-input" id="sku-search"
+                       placeholder="SKU filtern …"
+                       {% if not dbConfigured %}disabled{% endif %}>
+                <button class="btn btn-ghost btn-sm" id="btn-load-products" type="button"
+                        {% if not dbConfigured or not pegasusConfigured %}disabled{% endif %}>
+                    Laden
+                </button>
+            </div>
+
+            <div class="product-list-wrap hidden" id="product-list-wrap">
+                <div class="product-list" id="product-list"></div>
+                <div class="product-list-footer" id="product-footer"></div>
+            </div>
+
+            <div class="selection-toolbar" id="product-toolbar" style="display:none;">
+                <button class="btn btn-ghost btn-sm" id="btn-select-all" type="button">Alle</button>
+                <button class="btn btn-ghost btn-sm" id="btn-select-none" type="button">Keine</button>
+                <span class="sep">|</span>
+                <span class="selected-chip" id="selected-badge" style="display:none;">
+                    <span id="selected-count">0</span> ausgewählt
+                </span>
+                <span id="selected-count-plain" style="font-size:0.8rem;color:var(--muted);">0 ausgewählt</span>
+            </div>
+
+            <div style="margin-top:1.25rem;">
+                <button class="btn btn-primary" id="btn-start-products" type="button"
+                        {% if not pegasusConfigured %}disabled{% endif %}>
+                    ⚡ Orders anlegen
+                </button>
+                <p style="font-size:0.76rem;color:var(--subtle);margin-top:0.6rem;">
+                    Pro ausgewähltem Produkt wird genau 1 Order mit SKU + EAN aus der DB erstellt.
+                </p>
+            </div>
+        </div>
+
+        <!-- Manual mode -->
+        <div id="manual-mode">
+            <div class="field">
+                <label for="item-sku">Item-SKU (intern)</label>
+                <input type="text" id="item-sku"
+                       value="{{ defaultItemSku|e('html_attr') }}"
+                       autocomplete="off"
+                       {% if not pegasusConfigured %}disabled{% endif %}
+                       placeholder="z. B. IHRE-INTERNE-SKU">
+                <div class="field-hint">Fallback: <code>PEGASUS_ITEM_SKU</code></div>
+            </div>
+            <div class="field">
+                <label for="item-ean">EAN</label>
+                <input type="text" id="item-ean"
+                       value="{{ defaultItemEan|e('html_attr') }}"
+                       autocomplete="off"
+                       {% if not pegasusConfigured %}disabled{% endif %}
+                       placeholder="leer = Fallback-EAN aus Builder">
+                <div class="field-hint">Fallback: <code>PEGASUS_ITEM_EAN</code></div>
+            </div>
+            <div class="field">
+                <label for="order-count">Anzahl Dummy-Orders</label>
+                <input type="number" id="order-count" min="1" max="200" value="1"
+                       {% if not pegasusConfigured %}disabled{% endif %}>
+            </div>
+            <div style="margin-top:1.25rem;">
+                <button class="btn btn-primary" id="btn-start-manual" type="button"
+                        {% if not pegasusConfigured %}disabled{% endif %}>
+                    ⚡ Orders anlegen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress + Log -->
+    <div class="glass-card">
+        <div class="progress-header">
+            <div class="card-title" style="margin-bottom:0;">Fortschritt</div>
+            <span id="progress-text" style="font-size:0.78rem;color:var(--muted);">Bereit.</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <progress id="batch-progress" value="0" max="1"></progress>
+
+        <div class="log-wrap">
+            <div class="log-titlebar">
+                <span class="log-dot"></span>
+                <span class="log-dot"></span>
+                <span class="log-dot"></span>
+                <span style="font-size:0.72rem;color:var(--subtle);margin-left:0.5rem;letter-spacing:0.05em;">LOG OUTPUT</span>
+            </div>
+            <pre id="log"></pre>
+        </div>
+    </div>
+
+</div><!-- .page -->
+    </div><!-- .main-content -->
+</div><!-- .app-shell -->
+
+<script>
+(function () {
+    const urlCreateOne    = {{ path('app_dummy_orders_create_one')|json_encode|raw }};
+    const urlStockProducts = {{ path('app_stock_products')|json_encode|raw }};
+
+    const apiUserInput   = document.getElementById('api-user');
+    const apiSecretInput = document.getElementById('api-secret');
+    const skuInput       = document.getElementById('item-sku');
+    const eanInput       = document.getElementById('item-ean');
+    const countInput     = document.getElementById('order-count');
+    const skuSearchInput = document.getElementById('sku-search');
+
+    const btnLoadProducts  = document.getElementById('btn-load-products');
+    const btnSelectAll     = document.getElementById('btn-select-all');
+    const btnSelectNone    = document.getElementById('btn-select-none');
+    const btnStartProducts = document.getElementById('btn-start-products');
+    const btnStartManual   = document.getElementById('btn-start-manual');
+
+    const productListWrap  = document.getElementById('product-list-wrap');
+    const productListEl    = document.getElementById('product-list');
+    const productFooterEl  = document.getElementById('product-footer');
+    const productToolbar   = document.getElementById('product-toolbar');
+    const selectedCountEl  = document.getElementById('selected-count');
+    const selectedCountPlain = document.getElementById('selected-count-plain');
+    const selectedBadgeEl  = document.getElementById('selected-badge');
+
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const logEl        = document.getElementById('log');
+
+    const tabProducts  = document.getElementById('tab-products');
+    const tabManual    = document.getElementById('tab-manual');
+    const modeProducts = document.getElementById('product-mode');
+    const modeManual   = document.getElementById('manual-mode');
+
+    const PAGE_SIZE = 100;
+    let isRunning = false;
+
+    // ── tabs ──
+    tabProducts.addEventListener('click', function () {
+        tabProducts.classList.add('active'); tabManual.classList.remove('active');
+        modeProducts.classList.add('visible'); modeManual.classList.remove('visible');
+    });
+    tabManual.addEventListener('click', function () {
+        tabManual.classList.add('active'); tabProducts.classList.remove('active');
+        modeManual.classList.add('visible'); modeProducts.classList.remove('visible');
+    });
+
+    // ── selection info ──
+    function updateSelectionInfo() {
+        const checked = productListEl.querySelectorAll('input[type=checkbox]:checked').length;
+        selectedCountEl.textContent  = String(checked);
+        selectedCountPlain.textContent = checked + ' ausgewählt';
+        if (checked > 0) {
+            selectedBadgeEl.style.display = '';
+            selectedCountPlain.style.display = 'none';
+        } else {
+            selectedBadgeEl.style.display = 'none';
+            selectedCountPlain.style.display = '';
+        }
+    }
+
+    // ── render products ──
+    function renderProducts(products) {
+        productListEl.innerHTML = '';
+        if (products.length === 0) {
+            productListEl.innerHTML = '<div class="product-row" style="color:var(--subtle);justify-content:center;padding:1.5rem;">Keine vorrätigten Produkte gefunden.</div>';
+            return;
+        }
+        products.forEach(function (p) {
+            const row = document.createElement('div');
+            row.className = 'product-row';
+            row.addEventListener('click', function (e) {
+                if (e.target !== cb) { cb.checked = !cb.checked; updateSelectionInfo(); }
+            });
+
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = JSON.stringify({ sku: p.sku, ean: p.ean });
+            cb.addEventListener('change', updateSelectionInfo);
+
+            const sku = document.createElement('span');
+            sku.className = 'product-sku';
+            sku.title = p.sku;
+            sku.textContent = p.sku;
+
+            const ean = document.createElement('span');
+            ean.className = 'product-ean';
+            ean.textContent = p.ean || '—';
+
+            const stock = document.createElement('span');
+            stock.className = 'product-stock';
+            stock.textContent = p.stock + ' ×';
+
+            row.appendChild(cb);
+            row.appendChild(sku);
+            row.appendChild(ean);
+            row.appendChild(stock);
+            productListEl.appendChild(row);
+        });
+        updateSelectionInfo();
+    }
+
+    function renderFooter(offset, total, search) {
+        const from = total === 0 ? 0 : offset + 1;
+        const to   = Math.min(offset + PAGE_SIZE, total);
+        let html = '<span>' + from + '–' + to + ' von <strong style="color:var(--muted);">' + total + '</strong>' + (search ? ' (gefiltert)' : '') + '</span>';
+        html += '<span style="display:flex;gap:0.4rem;">';
+        if (offset > 0)  html += '<button class="btn btn-ghost btn-sm" id="btn-prev-page">← Zurück</button>';
+        if (to < total)  html += '<button class="btn btn-ghost btn-sm" id="btn-next-page">Weiter →</button>';
+        html += '</span>';
+        productFooterEl.innerHTML = html;
+
+        const btnNext = document.getElementById('btn-next-page');
+        const btnPrev = document.getElementById('btn-prev-page');
+        if (btnNext) btnNext.addEventListener('click', function () { loadProducts(offset + PAGE_SIZE, search); });
+        if (btnPrev) btnPrev.addEventListener('click', function () { loadProducts(Math.max(0, offset - PAGE_SIZE), search); });
+    }
+
+    async function loadProducts(offset, search) {
+        const apiUser = apiUserInput.value.trim();
+        if (!apiUser) { alert('Bitte zuerst den API-Benutzer eingeben.'); return; }
+        btnLoadProducts.disabled = true;
+        btnLoadProducts.textContent = 'Lädt …';
+        const params = new URLSearchParams({ apiUser, search, offset: String(offset), limit: String(PAGE_SIZE) });
+        try {
+            const res  = await fetch(urlStockProducts + '?' + params, { headers: { Accept: 'application/json' } });
+            const data = await res.json();
+            if (!data.ok) { alert('Fehler: ' + (data.error || 'Unbekannt')); return; }
+            productListWrap.classList.remove('hidden');
+            productToolbar.style.display = 'flex';
+            renderProducts(data.products);
+            renderFooter(data.offset, data.total, search);
+        } catch (e) {
+            alert('Netzwerkfehler: ' + e);
+        } finally {
+            btnLoadProducts.disabled = false;
+            btnLoadProducts.textContent = 'Laden';
+        }
+    }
+
+    btnLoadProducts.addEventListener('click', function () { loadProducts(0, skuSearchInput.value.trim()); });
+    skuSearchInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') loadProducts(0, skuSearchInput.value.trim()); });
+    btnSelectAll.addEventListener('click',  function () { productListEl.querySelectorAll('input[type=checkbox]').forEach(function (cb) { cb.checked = true;  }); updateSelectionInfo(); });
+    btnSelectNone.addEventListener('click', function () { productListEl.querySelectorAll('input[type=checkbox]').forEach(function (cb) { cb.checked = false; }); updateSelectionInfo(); });
+
+    // ── logging ──
+    function formatApiBody(raw) {
+        const s = String(raw || '').trim();
+        if (!s) return '';
+        try { return JSON.stringify(JSON.parse(s), null, 2); } catch (e) { return s; }
+    }
+    function appendLine(text, ok) {
+        const span = document.createElement('span');
+        span.className = ok ? 'line-ok' : 'line-err';
+        span.textContent = text + '\n';
+        logEl.appendChild(span);
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+    function appendEntry(line, ok, data) {
+        appendLine(line, ok);
+        let body = '';
+        if (data && Object.prototype.hasOwnProperty.call(data, 'responseBody')) {
+            body = formatApiBody(data.responseBody) || '(leerer Response-Body von Pegasus)';
+        } else if (data && data.error) {
+            body = String(data.error);
+        } else {
+            body = '(kein responseBody)';
+        }
+        appendLine('--- API response ---\n' + body, ok);
+    }
+
+    // ── progress ──
+    function setProgress(value, max) {
+        const pct = max > 0 ? (value / max) * 100 : 0;
+        progressFill.style.width = pct + '%';
+    }
+
+    // ── run orders ──
+    async function runOrders(items) {
+        if (isRunning) return;
+        isRunning = true;
+        logEl.innerHTML = '';
+        setProgress(0, items.length);
+        progressText.textContent = 'Starte …';
+        const apiUser   = apiUserInput.value.trim();
+        const apiSecret = apiSecretInput.value.trim();
+        let okCount = 0, failCount = 0;
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            progressText.textContent = 'Order ' + (i + 1) + ' / ' + items.length + (item.sku ? ' — ' + item.sku : '') + ' …';
+            try {
+                const res  = await fetch(urlCreateOne, {
+                    method: 'POST',
+                    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ itemSku: item.sku, itemEan: item.ean, apiUser, apiSecret }),
+                });
+                const data = await res.json().catch(function () { return {}; });
+                const sc   = data.statusCode != null ? data.statusCode : res.status;
+                const line = '#' + (i + 1) + ' HTTP ' + sc
+                    + ' | ' + (data.externalOrderId || data.error || '?')
+                    + ' | ' + (item.sku || '') + (item.ean ? ' / ' + item.ean : '')
+                    + ' | ' + (data.message || data.error || '');
+                if (data.ok === true) { okCount++;   appendEntry(line, true,  data); }
+                else                  { failCount++; appendEntry(line, false, data); }
+            } catch (e) {
+                failCount++;
+                appendLine('#' + (i + 1) + ' Netzwerk: ' + e, false);
+            }
+            setProgress(i + 1, items.length);
+        }
+        progressText.textContent = 'Fertig: ' + okCount + ' ok, ' + failCount + ' fehlgeschlagen.';
+        isRunning = false;
+    }
+
+    btnStartProducts.addEventListener('click', async function () {
+        const checked = Array.from(productListEl.querySelectorAll('input[type=checkbox]:checked'));
+        if (checked.length === 0) { alert('Bitte mindestens ein Produkt auswählen.'); return; }
+        const items = checked.map(function (cb) { return JSON.parse(cb.value); });
+        btnStartProducts.disabled = true; btnLoadProducts.disabled = true;
+        await runOrders(items);
+        btnStartProducts.disabled = false; btnLoadProducts.disabled = false;
+    });
+
+    btnStartManual.addEventListener('click', async function () {
+        let n = parseInt(String(countInput.value), 10);
+        if (!Number.isFinite(n) || n < 1) n = 1;
+        if (n > 200) n = 200;
+        countInput.value = String(n);
+        const sku = skuInput.value.trim();
+        const ean = eanInput.value.trim();
+        btnStartManual.disabled = true;
+        await runOrders(Array.from({ length: n }, function () { return { sku, ean }; }));
+        btnStartManual.disabled = false;
+    });
+})();
+</script>
+</body>
+</html>

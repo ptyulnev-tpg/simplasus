@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pegasus — API User Erstellung</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --bg-base:      #0d1321;
+            --bg-mid:       #111827;
+            --glass:        rgba(255,255,255,0.04);
+            --glass-hover:  rgba(255,255,255,0.07);
+            --glass-border: rgba(255,255,255,0.09);
+            --glass-strong: rgba(255,255,255,0.10);
+            --text:         #f0f4ff;
+            --muted:        #8b9fc4;
+            --subtle:       #4d6082;
+            --accent:       #6366f1;
+            --accent-2:     #8b5cf6;
+            --accent-glow:  rgba(99,102,241,0.35);
+            --ok:           #34d399;
+            --ok-glow:      rgba(52,211,153,0.25);
+            --err:          #f87171;
+            --err-glow:     rgba(248,113,113,0.25);
+            --warn-border:  rgba(248,113,113,0.4);
+            --orb-a:        rgba(99,102,241,0.18);
+            --orb-b:        rgba(139,92,246,0.14);
+            --orb-c:        rgba(34,211,238,0.10);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-base);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ── Animated background ── */
+        .bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 10% 15%, var(--orb-a) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 70% at 90% 80%, var(--orb-b) 0%, transparent 65%),
+                radial-gradient(ellipse 50% 50% at 50% 50%, var(--orb-c) 0%, transparent 70%),
+                linear-gradient(160deg, #0d1321 0%, #111827 50%, #0f172a 100%);
+            animation: bgShift 18s ease-in-out infinite alternate;
+        }
+        @keyframes bgShift {
+            0%   { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(25deg); }
+        }
+
+        /* ── App shell ── */
+        .app-shell {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            width: 220px;
+            flex-shrink: 0;
+            background: rgba(0,0,0,0.35);
+            border-right: 1px solid var(--glass-border);
+            backdrop-filter: blur(24px) saturate(160%);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 0 2rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0 1.1rem 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 1rem;
+        }
+        .sidebar-brand-icon {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            box-shadow: 0 0 14px var(--accent-glow);
+            flex-shrink: 0;
+        }
+        .sidebar-brand-text {
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            background: linear-gradient(90deg, #e0e7ff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+        .sidebar-section-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--subtle);
+            padding: 0 1.1rem;
+            margin-bottom: 0.4rem;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.55rem 1.1rem;
+            font-size: 0.84rem;
+            font-weight: 500;
+            color: var(--muted);
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+            border-left: 3px solid transparent;
+        }
+        .nav-item:hover { background: var(--glass-hover); color: var(--text); }
+        .nav-item.active { background: rgba(99,102,241,0.12); color: #c7d2fe; border-left-color: var(--accent); }
+        .nav-item-icon { font-size: 1rem; flex-shrink: 0; width: 1.2rem; text-align: center; }
+
+        /* ── Main content ── */
+        .main-content { flex: 1; min-width: 0; }
+
+        /* ── Layout ── */
+        .page {
+            max-width: 58rem;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 4rem;
+        }
+
+        /* ── Header ── */
+        .site-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .brand-text h1 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #e0e7ff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .brand-text p { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 99px;
+            padding: 0.35rem 0.9rem;
+            font-size: 0.78rem;
+            color: var(--muted);
+            backdrop-filter: blur(12px);
+        }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .status-dot.ok  { background: var(--ok);  box-shadow: 0 0 6px var(--ok-glow); }
+        .status-dot.err { background: var(--err); box-shadow: 0 0 6px var(--err-glow); }
+
+        /* ── Glass card ── */
+        .glass-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+            backdrop-filter: blur(24px) saturate(160%);
+            box-shadow: 0 2px 0 rgba(255,255,255,0.04) inset, 0 8px 32px rgba(0,0,0,0.28);
+            transition: border-color 0.2s;
+        }
+        .glass-card:hover { border-color: rgba(255,255,255,0.14); }
+
+        .card-title {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--subtle);
+            margin-bottom: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card-title::before {
+            content: '';
+            display: inline-block;
+            width: 3px; height: 12px;
+            border-radius: 2px;
+            background: linear-gradient(180deg, var(--accent), var(--accent-2));
+        }
+
+        /* ── Warn banner ── */
+        .warn-banner {
+            background: rgba(248,113,113,0.06);
+            border: 1px solid var(--warn-border);
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            font-size: 0.84rem;
+            color: #fca5a5;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            backdrop-filter: blur(12px);
+        }
+        .warn-banner code {
+            background: rgba(255,255,255,0.08);
+            border-radius: 4px;
+            padding: 0.05em 0.35em;
+            font-size: 0.82em;
+        }
+
+        /* ── Form elements ── */
+        .field + .field { margin-top: 1.1rem; }
+        .field label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--muted);
+            margin-bottom: 0.45rem;
+            letter-spacing: 0.01em;
+        }
+        .field input {
+            width: 100%;
+            max-width: 30rem;
+            padding: 0.6rem 0.85rem;
+            border-radius: 9px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(0,0,0,0.25);
+            color: var(--text);
+            font-size: 0.92rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+        .field input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .field input::placeholder { color: var(--subtle); }
+        .field input:disabled { opacity: 0.4; cursor: not-allowed; }
+        .field-hint { font-size: 0.75rem; color: var(--subtle); margin-top: 0.35rem; }
+        .field-hint code {
+            background: rgba(255,255,255,0.06);
+            border-radius: 3px;
+            padding: 0.05em 0.3em;
+            font-size: 0.9em;
+        }
+        .field-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .field-row input { flex: 1; min-width: 14rem; max-width: 26rem; }
+
+        /* ── Password reveal card ── */
+        .pw-reveal {
+            display: none;
+            margin-top: 1rem;
+            background: rgba(52,211,153,0.05);
+            border: 1px solid rgba(52,211,153,0.25);
+            border-radius: 12px;
+            padding: 1.1rem 1.2rem;
+        }
+        .pw-reveal.visible { display: block; }
+        .pw-reveal-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: var(--ok);
+            margin-bottom: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .pw-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.55rem;
+            flex-wrap: wrap;
+        }
+        .pw-row:last-child { margin-bottom: 0; }
+        .pw-label {
+            font-size: 0.72rem;
+            color: var(--subtle);
+            width: 4.5rem;
+            flex-shrink: 0;
+        }
+        .pw-value {
+            font-family: 'SF Mono', ui-monospace, monospace;
+            font-size: 0.85rem;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 7px;
+            padding: 0.4rem 0.75rem;
+            color: var(--text);
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            letter-spacing: 0.04em;
+        }
+        .pw-value.plaintext { color: #86efac; font-size: 1rem; letter-spacing: 0.08em; font-weight: 600; }
+        .pw-value.hash { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+            font-family: inherit;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            transition: all 0.18s;
+            letter-spacing: 0.01em;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #fff;
+            box-shadow: 0 4px 14px var(--accent-glow);
+        }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px var(--accent-glow); }
+        .btn-primary:active:not(:disabled) { transform: translateY(0); }
+        .btn-ghost {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--muted);
+            backdrop-filter: blur(8px);
+        }
+        .btn-ghost:hover:not(:disabled) { border-color: var(--accent); color: #c7d2fe; background: rgba(99,102,241,0.1); }
+        .btn-sm { padding: 0.38rem 0.8rem; font-size: 0.8rem; border-radius: 7px; }
+        .btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none !important; }
+
+        /* ── Log wrap ── */
+        .code-wrap {
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            background: rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .code-titlebar {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 0.85rem;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .code-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .code-dot:nth-child(1) { background: #ff5f57; }
+        .code-dot:nth-child(2) { background: #febc2e; }
+        .code-dot:nth-child(3) { background: #28c840; }
+
+        #execute-section { display: none; }
+        #execute-section.visible { display: block; }
+
+        /* ── Execute log ── */
+        .exec-log {
+            font-family: 'SF Mono', ui-monospace, monospace;
+            font-size: 0.75rem;
+            max-height: 18rem;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            padding: 0.85rem 1rem;
+        }
+        .exec-log::-webkit-scrollbar { width: 5px; }
+        .exec-log::-webkit-scrollbar-track { background: transparent; }
+        .exec-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 99px; }
+        .line-ok  { color: var(--ok); }
+        .line-err { color: var(--err); }
+
+        .exec-summary {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.82rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .exec-stat { display: flex; align-items: center; gap: 0.4rem; }
+        .exec-stat strong { font-size: 1rem; }
+
+        /* ── Info box ── */
+        .info-box {
+            background: rgba(99,102,241,0.06);
+            border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 10px;
+            padding: 0.9rem 1rem;
+            font-size: 0.82rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        .info-box code {
+            background: rgba(255,255,255,0.07);
+            border-radius: 3px;
+            padding: 0.05em 0.35em;
+            font-size: 0.88em;
+            color: #a5b4fc;
+        }
+
+        @media (max-width: 640px) { .sidebar { display: none; } }
+    </style>
+</head>
+<body>
+<div class="bg-canvas"></div>
+
+<div class="app-shell">
+
+    {{ include('_sidebar.html.twig') }}
+
+    <div class="main-content">
+    <div class="page">
+
+        <!-- Header -->
+        <header class="site-header">
+            <div class="brand-text">
+                <h1>API User Erstellung</h1>
+                <p>INSERT-Statements für middleware_merchants_user generieren</p>
+            </div>
+            <div class="status-pill">
+                <span class="status-dot {{ dbConfigured ? 'ok' : 'err' }}"></span>
+                {{ dbConfigured ? 'DB verbunden' : 'DB nicht konfiguriert' }}
+            </div>
+        </header>
+
+        {% if not dbConfigured %}
+            <div class="warn-banner">
+                <span>⚠</span>
+                <span>DB nicht konfiguriert. Bitte <code>PEGASUS_STAGING_DB_*</code> in <code>.env.local</code> setzen.</span>
+            </div>
+        {% endif %}
+
+        <!-- Info -->
+        <div class="glass-card">
+            <div class="card-title">Funktionsweise</div>
+            <div class="info-box">
+                Dieses Tool führt die Generator-Abfrage gegen <code>tpg_b2b.data_retailer</code> aus und
+                erstellt fertige <code>INSERT</code>-Statements für <code>tpg_erp.middleware_merchants_user</code>.
+                Händler, die bereits einen API-User mit dem gewählten Prefix haben, werden automatisch übersprungen.
+                Die generierten Statements können direkt im DB-Client ausgeführt werden.
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="glass-card">
+            <div class="card-title">Parameter</div>
+
+            <div class="field">
+                <label for="api-prefix">API-Prefix</label>
+                <input type="text" id="api-prefix" placeholder="z. B. STAGING"
+                       autocomplete="off" {% if not dbConfigured %}disabled{% endif %}>
+                <div class="field-hint">
+                    Erzeugt Username <code>API-PREFIX-merchantname</code> und
+                    E-Mail <code>noreply+API-PREFIX-merchantname@the-platform-group.com</code>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="api-password">Passwort (gehasht)</label>
+                <div class="field-row">
+                    <input type="text" id="api-password" placeholder="Gehashtes Passwort eintragen"
+                           autocomplete="off" {% if not dbConfigured %}disabled{% endif %}>
+                    <button class="btn btn-ghost btn-sm" id="btn-gen-pw" type="button"
+                            {% if not dbConfigured %}disabled{% endif %}>
+                        🎲 Generieren
+                    </button>
+                </div>
+                <div class="field-hint">Wird direkt in die <code>password</code>-Spalte der INSERTs eingetragen.</div>
+
+                <!-- Password reveal -->
+                <div class="pw-reveal" id="pw-reveal">
+                    <div class="pw-reveal-title">⚠ Passwort notieren — wird danach nicht mehr angezeigt!</div>
+
+                    <div class="pw-row">
+                        <span class="pw-label">Klartext</span>
+                        <span class="pw-value plaintext" id="pw-plain-1"></span>
+                        <button class="btn btn-ghost btn-sm" data-copy="pw-plain-1" type="button">Kopieren</button>
+                    </div>
+                    <div class="pw-row">
+                        <span class="pw-label">Klartext</span>
+                        <span class="pw-value plaintext" id="pw-plain-2"></span>
+                        <button class="btn btn-ghost btn-sm" data-copy="pw-plain-2" type="button">Kopieren</button>
+                    </div>
+                    <div class="pw-row" style="margin-top:0.4rem;padding-top:0.7rem;border-top:1px solid rgba(255,255,255,0.06);">
+                        <span class="pw-label">bcrypt Hash</span>
+                        <span class="pw-value hash" id="pw-hash-display"></span>
+                        <button class="btn btn-ghost btn-sm" data-copy="pw-hash-display" type="button">Kopieren</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field" style="margin-top:1.1rem;">
+                <label for="api-email">E-Mail (optional)</label>
+                <input type="email" id="api-email" placeholder="leer = noreply+API-PREFIX-name@the-platform-group.com"
+                       autocomplete="off" {% if not dbConfigured %}disabled{% endif %}>
+                <div class="field-hint">Wird für alle erstellten User gesetzt. Leer = E-Mail automatisch aus Prefix + Händlername generieren.</div>
+            </div>
+
+            <div class="field" style="margin-top:1.1rem;">
+                <label for="merchant-filter">Händler-IDs (optional)</label>
+                <input type="text" id="merchant-filter" placeholder="123,456,789 — leer = alle Händler"
+                       autocomplete="off" {% if not dbConfigured %}disabled{% endif %}>
+                <div class="field-hint">Kommagetrennte Merchant-IDs aus <code>tpg_b2b.data_retailer.UMLFIRMA</code>. Leer = alle Händler.</div>
+            </div>
+
+            <div style="margin-top:1.5rem;">
+                <button class="btn btn-primary" id="btn-create" type="button"
+                        {% if not dbConfigured %}disabled{% endif %}>
+                    ⚡ API User erstellen
+                </button>
+            </div>
+        </div>
+
+        <!-- Execute log -->
+        <div class="glass-card" id="execute-section">
+            <div class="card-title">Ausführungs-Log</div>
+            <div class="code-wrap">
+                <div class="code-titlebar">
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                    <span class="code-dot"></span>
+                    <span style="font-size:0.72rem;color:var(--subtle);margin-left:0.5rem;letter-spacing:0.05em;">EXECUTE LOG</span>
+                </div>
+                <pre class="exec-log" id="exec-log"></pre>
+            </div>
+            <div class="exec-summary" id="exec-summary"></div>
+        </div>
+
+    </div><!-- .page -->
+    </div><!-- .main-content -->
+</div><!-- .app-shell -->
+
+<script>
+(function () {
+    const urlGenPassword = {{ path('app_api_user_generate_password')|json_encode|raw }};
+    const urlExecute     = {{ path('app_api_user_execute')|json_encode|raw }};
+
+    const prefixInput    = document.getElementById('api-prefix');
+    const passwordInput  = document.getElementById('api-password');
+    const emailInput     = document.getElementById('api-email');
+    const filterInput    = document.getElementById('merchant-filter');
+    const btnCreate      = document.getElementById('btn-create');
+    const btnGenPw       = document.getElementById('btn-gen-pw');
+    const executeSection = document.getElementById('execute-section');
+    const execLog        = document.getElementById('exec-log');
+    const execSummary    = document.getElementById('exec-summary');
+    const pwReveal       = document.getElementById('pw-reveal');
+    const pwPlain1       = document.getElementById('pw-plain-1');
+    const pwPlain2       = document.getElementById('pw-plain-2');
+    const pwHashDisplay  = document.getElementById('pw-hash-display');
+
+    // ── Password generator ──
+    btnGenPw.addEventListener('click', async function () {
+        btnGenPw.disabled = true;
+        btnGenPw.textContent = '…';
+        try {
+            const res  = await fetch(urlGenPassword, { method: 'POST', headers: { Accept: 'application/json' } });
+            const data = await res.json();
+            if (!data.ok) { alert('Fehler: ' + data.error); return; }
+            passwordInput.value       = data.hash;
+            pwPlain1.textContent      = data.plaintext;
+            pwPlain2.textContent      = data.plaintext;
+            pwHashDisplay.textContent = data.hash;
+            pwReveal.classList.add('visible');
+        } catch (e) {
+            alert('Netzwerkfehler: ' + e);
+        } finally {
+            btnGenPw.disabled = false;
+            btnGenPw.textContent = '🎲 Neu generieren';
+        }
+    });
+
+    // ── Copy buttons inside reveal box ──
+    pwReveal.addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-copy]');
+        if (!btn) return;
+        const el = document.getElementById(btn.dataset.copy);
+        if (!el) return;
+        navigator.clipboard.writeText(el.textContent).then(function () {
+            const orig = btn.textContent;
+            btn.textContent = 'Kopiert ✓';
+            setTimeout(function () { btn.textContent = orig; }, 1800);
+        });
+    });
+
+    // ── Create ──
+    btnCreate.addEventListener('click', async function () {
+        const apiPrefix      = prefixInput.value.trim();
+        const password       = passwordInput.value.trim();
+        const email          = emailInput.value.trim();
+        const merchantFilter = filterInput.value.trim();
+
+        if (!apiPrefix) { alert('Bitte einen API-Prefix eingeben.'); return; }
+        if (!password)  { alert('Bitte ein (gehashtes) Passwort eingeben oder generieren.'); return; }
+
+        btnCreate.disabled = true;
+        btnCreate.textContent = 'Erstellt …';
+        execLog.innerHTML = '';
+        execSummary.innerHTML = '';
+        executeSection.classList.add('visible');
+        executeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        try {
+            const res  = await fetch(urlExecute, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({ apiPrefix, password, email, merchantFilter }),
+            });
+            const data = await res.json();
+
+            if (!data.ok) { appendLine('Fehler: ' + (data.error || 'Unbekannt'), false); return; }
+
+            if (data.results.length === 0) {
+                appendLine('Keine neuen Händler — alle haben bereits einen User mit diesem Prefix.', true);
+            } else {
+                data.results.forEach(function (r) {
+                    const line = (r.ok ? '✓' : '✗') + ' [' + r.merchant_id + '] ' + r.user + (r.error ? '  →  ' + r.error : '');
+                    appendLine(line, r.ok);
+                });
+            }
+
+            execSummary.innerHTML =
+                '<div class="exec-stat"><strong style="color:var(--ok);">' + data.okCount + '</strong><span style="color:var(--muted);">erfolgreich</span></div>' +
+                (data.failCount > 0
+                    ? '<div class="exec-stat"><strong style="color:var(--err);">' + data.failCount + '</strong><span style="color:var(--muted);">fehlgeschlagen</span></div>'
+                    : '');
+        } catch (e) {
+            appendLine('Netzwerkfehler: ' + e, false);
+        } finally {
+            btnCreate.disabled = false;
+            btnCreate.textContent = '⚡ API User erstellen';
+        }
+    });
+
+    function appendLine(text, ok) {
+        const span = document.createElement('span');
+        span.className = ok ? 'line-ok' : 'line-err';
+        span.textContent = text + '\n';
+        execLog.appendChild(span);
+        execLog.scrollTop = execLog.scrollHeight;
+    }
+})();
+</script>
+</body>
+</html>

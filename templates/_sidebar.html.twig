@@ -1,0 +1,16 @@
+{% set _route = app.request.attributes.get('_route') %}
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">⚡</div>
+        <div class="sidebar-brand-text">Pegasus<br>Test Tools</div>
+    </div>
+    <div class="sidebar-section-label">Tools</div>
+    <a href="{{ path('app_dummy_orders') }}" class="nav-item {{ _route == 'app_dummy_orders' ? 'active' : '' }}">
+        <span class="nav-item-icon">📦</span>
+        Test-Order Erstellung
+    </a>
+    <a href="{{ path('app_api_user') }}" class="nav-item {{ _route == 'app_api_user' ? 'active' : '' }}">
+        <span class="nav-item-icon">👤</span>
+        API User Erstellung
+    </a>
+</nav>
