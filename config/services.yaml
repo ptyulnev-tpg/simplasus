@@ -36,7 +36,8 @@ services:
             $schema: '%env(string:PEGASUS_STAGING_DB_SCHEMA)%'
             $port: '%env(int:PEGASUS_STAGING_DB_PORT)%'
 
-    App\Middleware\DuplicateUserRepository:
+    app.repo.api_user.staging:
+        class: App\Middleware\ApiUserRepository
         arguments:
             $host: '%env(string:PEGASUS_STAGING_DB_IP)%'
             $user: '%env(string:PEGASUS_STAGING_DB_USER)%'
@@ -44,13 +45,32 @@ services:
             $schema: '%env(string:PEGASUS_STAGING_DB_SCHEMA)%'
             $port: '%env(int:PEGASUS_STAGING_DB_PORT)%'
 
-    App\Middleware\ApiUserRepository:
+    app.repo.api_user.live:
+        class: App\Middleware\ApiUserRepository
+        arguments:
+            $host: '%env(string:PEGASUS_LIVE_DB_IP)%'
+            $user: '%env(string:PEGASUS_LIVE_DB_USER)%'
+            $password: '%env(string:PEGASUS_LIVE_DB_PASSWORD)%'
+            $schema: '%env(string:PEGASUS_LIVE_DB_SCHEMA)%'
+            $port: '%env(int:PEGASUS_LIVE_DB_PORT)%'
+
+    app.repo.duplicate.staging:
+        class: App\Middleware\DuplicateUserRepository
         arguments:
             $host: '%env(string:PEGASUS_STAGING_DB_IP)%'
             $user: '%env(string:PEGASUS_STAGING_DB_USER)%'
             $password: '%env(string:PEGASUS_STAGING_DB_PASSWORD)%'
             $schema: '%env(string:PEGASUS_STAGING_DB_SCHEMA)%'
             $port: '%env(int:PEGASUS_STAGING_DB_PORT)%'
+
+    app.repo.duplicate.live:
+        class: App\Middleware\DuplicateUserRepository
+        arguments:
+            $host: '%env(string:PEGASUS_LIVE_DB_IP)%'
+            $user: '%env(string:PEGASUS_LIVE_DB_USER)%'
+            $password: '%env(string:PEGASUS_LIVE_DB_PASSWORD)%'
+            $schema: '%env(string:PEGASUS_LIVE_DB_SCHEMA)%'
+            $port: '%env(int:PEGASUS_LIVE_DB_PORT)%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

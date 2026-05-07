@@ -130,6 +130,17 @@
         .result-ok  { color: var(--ok); font-size: 1rem; font-weight: 600; }
         .result-err { color: var(--err); font-size: 1rem; font-weight: 600; }
 
+        /* ── Context switcher ── */
+        .ctx-switch { display: flex; gap: 0.4rem; background: rgba(0,0,0,0.25); border: 1px solid var(--glass-border); border-radius: 10px; padding: 0.25rem; width: fit-content; }
+        .ctx-btn { padding: 0.4rem 1.2rem; font-size: 0.84rem; font-weight: 600; font-family: inherit; border: none; border-radius: 7px; cursor: pointer; background: transparent; color: var(--muted); transition: all 0.18s; }
+        .ctx-btn.active { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; box-shadow: 0 2px 10px var(--accent-glow); }
+        .ctx-btn.active.live { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 2px 10px rgba(239,68,68,0.4); }
+        .ctx-btn:hover:not(.active):not(:disabled) { color: var(--text); background: var(--glass-hover); }
+        .ctx-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .live-warning { display: none; margin-top: 1rem; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.35); border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.84rem; color: #fca5a5; gap: 0.6rem; align-items: flex-start; }
+        .live-warning.visible { display: flex; }
+        #ctx-card.live-active { border-color: rgba(239,68,68,0.35); background: rgba(239,68,68,0.04); }
+
         @media (max-width: 640px) { .sidebar { display: none; } }
     </style>
 </head>
@@ -148,17 +159,29 @@
                 <p>Doppelte E-Mail-Adressen in middleware_merchants_user bereinigen</p>
             </div>
             <div class="status-pill">
-                <span class="status-dot {{ dbConfigured ? 'ok' : 'err' }}"></span>
-                {{ dbConfigured ? 'DB verbunden' : 'DB nicht konfiguriert' }}
+                <span class="status-dot {{ stagingConfigured ? 'ok' : 'err' }}" id="status-dot"></span>
+                <span id="status-text">{{ stagingConfigured ? 'Staging DB verbunden' : 'Staging DB fehlt' }}</span>
             </div>
         </header>
 
-        {% if not dbConfigured %}
-            <div class="warn-banner">
-                <span>⚠</span>
-                <span>DB nicht konfiguriert. Bitte <code>PEGASUS_STAGING_DB_*</code> in <code>.env.local</code> setzen.</span>
+        <!-- Context switcher -->
+        <div class="glass-card" id="ctx-card">
+            <div class="card-title">Umgebung</div>
+            <div class="ctx-switch">
+                <button class="ctx-btn active" id="ctx-staging" type="button"
+                        {% if not stagingConfigured %}disabled title="Staging DB nicht konfiguriert"{% endif %}>
+                    Staging
+                </button>
+                <button class="ctx-btn" id="ctx-live" type="button"
+                        {% if not liveConfigured %}disabled title="Live DB nicht konfiguriert"{% endif %}>
+                    Live
+                </button>
             </div>
-        {% endif %}
+            <div class="live-warning" id="live-warning">
+                <span>⚠</span>
+                <span><strong>Achtung — Live-Umgebung!</strong> Änderungen wirken sich sofort auf die Produktionsdatenbank aus.</span>
+            </div>
+        </div>
 
         <!-- Action -->
         <div class="glass-card">
@@ -169,7 +192,7 @@
             </p>
             <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
                 <button class="btn btn-primary" id="btn-analyse" type="button"
-                        {% if not dbConfigured %}disabled{% endif %}>
+                        {% if not stagingConfigured and not liveConfigured %}disabled{% endif %}>
                     🔍 Analyse starten
                 </button>
                 <button class="btn btn-danger" id="btn-cleanup" type="button" style="display:none;">
@@ -231,6 +254,30 @@
     const statEmail      = document.getElementById('stat-email-count');
     const statExtra      = document.getElementById('stat-extra-count');
     const dupTbody       = document.getElementById('dup-tbody');
+    const ctxStaging     = document.getElementById('ctx-staging');
+    const ctxLive        = document.getElementById('ctx-live');
+    const ctxCard        = document.getElementById('ctx-card');
+    const liveWarning    = document.getElementById('live-warning');
+    const statusText     = document.getElementById('status-text');
+
+    let currentContext = 'staging';
+
+    function setContext(ctx) {
+        currentContext = ctx;
+        const isLive = ctx === 'live';
+        ctxStaging.classList.toggle('active', !isLive);
+        ctxLive.classList.toggle('active', isLive);
+        ctxLive.classList.toggle('live', isLive);
+        ctxCard.classList.toggle('live-active', isLive);
+        liveWarning.classList.toggle('visible', isLive);
+        statusText.textContent = isLive ? 'Live DB' : 'Staging DB';
+        analyseSection.classList.remove('visible');
+        resultSection.classList.remove('visible');
+        btnCleanup.style.display = 'none';
+    }
+
+    ctxStaging.addEventListener('click', function () { setContext('staging'); });
+    ctxLive.addEventListener('click', function () { setContext('live'); });
 
     btnAnalyse.addEventListener('click', async function () {
         btnAnalyse.disabled = true;
@@ -240,7 +287,11 @@
         btnCleanup.style.display = 'none';
 
         try {
-            const res  = await fetch(urlAnalyse, { method: 'POST', headers: { Accept: 'application/json' } });
+            const res  = await fetch(urlAnalyse, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({ context: currentContext }),
+            });
             const data = await res.json();
             if (!data.ok) { alert('Fehler: ' + data.error); return; }
 
@@ -283,7 +334,11 @@
         resultSection.classList.remove('visible');
 
         try {
-            const res  = await fetch(urlExecute, { method: 'POST', headers: { Accept: 'application/json' } });
+            const res  = await fetch(urlExecute, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({ context: currentContext }),
+            });
             const data = await res.json();
 
             if (!data.ok) {
