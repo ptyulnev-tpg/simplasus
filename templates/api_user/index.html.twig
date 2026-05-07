@@ -547,7 +547,7 @@
             <div class="field">
                 <label for="api-prefix">API-Prefix</label>
                 <input type="text" id="api-prefix" placeholder="z. B. STAGING"
-                       autocomplete="off" {% if not dbConfigured %}disabled{% endif %}>
+                       autocomplete="off" {% if not stagingConfigured and not liveConfigured %}disabled{% endif %}>
                 <div class="field-hint">
                     Erzeugt Username <code>API-PREFIX-merchantname</code> und
                     E-Mail <code>noreply+API-PREFIX-merchantname@the-platform-group.com</code>
@@ -558,9 +558,9 @@
                 <label for="api-password">Passwort (gehasht)</label>
                 <div class="field-row">
                     <input type="text" id="api-password" placeholder="Gehashtes Passwort eintragen"
-                           autocomplete="off" {% if not dbConfigured %}disabled{% endif %}>
+                           autocomplete="off" {% if not stagingConfigured and not liveConfigured %}disabled{% endif %}>
                     <button class="btn btn-ghost btn-sm" id="btn-gen-pw" type="button"
-                            {% if not dbConfigured %}disabled{% endif %}>
+                            {% if not stagingConfigured and not liveConfigured %}disabled{% endif %}>
                         🎲 Generieren
                     </button>
                 </div>
@@ -591,20 +591,20 @@
             <div class="field" style="margin-top:1.1rem;">
                 <label for="api-email">E-Mail (optional)</label>
                 <input type="email" id="api-email" placeholder="leer = noreply+API-PREFIX-name@the-platform-group.com"
-                       autocomplete="off" {% if not dbConfigured %}disabled{% endif %}>
+                       autocomplete="off" {% if not stagingConfigured and not liveConfigured %}disabled{% endif %}>
                 <div class="field-hint">Wird für alle erstellten User gesetzt. Leer = E-Mail automatisch aus Prefix + Händlername generieren.</div>
             </div>
 
             <div class="field" style="margin-top:1.1rem;">
                 <label for="merchant-filter">Händler-IDs (optional)</label>
                 <input type="text" id="merchant-filter" placeholder="123,456,789 — leer = alle Händler"
-                       autocomplete="off" {% if not dbConfigured %}disabled{% endif %}>
+                       autocomplete="off" {% if not stagingConfigured and not liveConfigured %}disabled{% endif %}>
                 <div class="field-hint">Kommagetrennte Merchant-IDs aus <code>tpg_b2b.data_retailer.UMLFIRMA</code>. Leer = alle Händler.</div>
             </div>
 
             <div style="margin-top:1.5rem;">
                 <button class="btn btn-primary" id="btn-create" type="button"
-                        {% if not dbConfigured %}disabled{% endif %}>
+                        {% if not stagingConfigured and not liveConfigured %}disabled{% endif %}>
                     ⚡ API User erstellen
                 </button>
             </div>
