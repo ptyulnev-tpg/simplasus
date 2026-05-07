@@ -2,8 +2,10 @@
 framework:
     secret: '%env(APP_SECRET)%'
 
-    # Stateless test tool: no login, no server-side session.
-    session: false
+    session:
+        handler_id: null
+        cookie_secure: auto
+        cookie_samesite: lax
 
     #esi: true
     #fragments: true
@@ -11,4 +13,5 @@ framework:
 when@test:
     framework:
         test: true
-        session: false
+        session:
+            storage_factory_id: session.storage.factory.mock_file
