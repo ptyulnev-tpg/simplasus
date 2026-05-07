@@ -36,6 +36,14 @@ services:
             $schema: '%env(string:PEGASUS_STAGING_DB_SCHEMA)%'
             $port: '%env(int:PEGASUS_STAGING_DB_PORT)%'
 
+    App\Middleware\DuplicateUserRepository:
+        arguments:
+            $host: '%env(string:PEGASUS_STAGING_DB_IP)%'
+            $user: '%env(string:PEGASUS_STAGING_DB_USER)%'
+            $password: '%env(string:PEGASUS_STAGING_DB_PASSWORD)%'
+            $schema: '%env(string:PEGASUS_STAGING_DB_SCHEMA)%'
+            $port: '%env(int:PEGASUS_STAGING_DB_PORT)%'
+
     App\Middleware\ApiUserRepository:
         arguments:
             $host: '%env(string:PEGASUS_STAGING_DB_IP)%'

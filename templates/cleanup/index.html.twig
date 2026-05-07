@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pegasus — Duplicate B2B User Mails</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --bg-base:      #0d1321;
+            --bg-mid:       #111827;
+            --glass:        rgba(255,255,255,0.04);
+            --glass-hover:  rgba(255,255,255,0.07);
+            --glass-border: rgba(255,255,255,0.09);
+            --text:         #f0f4ff;
+            --muted:        #8b9fc4;
+            --subtle:       #4d6082;
+            --accent:       #6366f1;
+            --accent-2:     #8b5cf6;
+            --accent-glow:  rgba(99,102,241,0.35);
+            --ok:           #34d399;
+            --ok-glow:      rgba(52,211,153,0.25);
+            --err:          #f87171;
+            --err-glow:     rgba(248,113,113,0.25);
+            --warn-border:  rgba(248,113,113,0.4);
+            --orb-a:        rgba(99,102,241,0.18);
+            --orb-b:        rgba(139,92,246,0.14);
+            --orb-c:        rgba(34,211,238,0.10);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-base);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .bg-canvas {
+            position: fixed; inset: 0; z-index: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 10% 15%, var(--orb-a) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 70% at 90% 80%, var(--orb-b) 0%, transparent 65%),
+                radial-gradient(ellipse 50% 50% at 50% 50%, var(--orb-c) 0%, transparent 70%),
+                linear-gradient(160deg, #0d1321 0%, #111827 50%, #0f172a 100%);
+            animation: bgShift 18s ease-in-out infinite alternate;
+        }
+        @keyframes bgShift {
+            0%   { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(25deg); }
+        }
+
+        .app-shell { position: relative; z-index: 1; display: flex; min-height: 100vh; }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            width: 220px; flex-shrink: 0;
+            background: rgba(0,0,0,0.35);
+            border-right: 1px solid var(--glass-border);
+            backdrop-filter: blur(24px) saturate(160%);
+            display: flex; flex-direction: column;
+            padding: 1.5rem 0 2rem;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .sidebar-brand { display: flex; align-items: center; gap: 0.7rem; padding: 0 1.1rem 1.5rem; border-bottom: 1px solid var(--glass-border); margin-bottom: 1rem; }
+        .sidebar-brand-icon { width: 2rem; height: 2rem; border-radius: 8px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: flex; align-items: center; justify-content: center; font-size: 0.95rem; box-shadow: 0 0 14px var(--accent-glow); flex-shrink: 0; }
+        .sidebar-brand-text { font-size: 0.82rem; font-weight: 700; letter-spacing: -0.01em; background: linear-gradient(90deg, #e0e7ff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.2; }
+        .sidebar-section-label { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--subtle); padding: 0 1.1rem; margin-bottom: 0.4rem; }
+        .nav-item { display: flex; align-items: center; gap: 0.65rem; padding: 0.55rem 1.1rem; font-size: 0.84rem; font-weight: 500; color: var(--muted); text-decoration: none; transition: background 0.15s, color 0.15s; border-left: 3px solid transparent; }
+        .nav-item:hover { background: var(--glass-hover); color: var(--text); }
+        .nav-item.active { background: rgba(99,102,241,0.12); color: #c7d2fe; border-left-color: var(--accent); }
+        .nav-item-icon { font-size: 1rem; flex-shrink: 0; width: 1.2rem; text-align: center; }
+
+        .main-content { flex: 1; min-width: 0; }
+
+        .page { max-width: 58rem; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+        .site-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1rem; }
+        .brand-text h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; background: linear-gradient(90deg, #e0e7ff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .brand-text p { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
+        .status-pill { display: flex; align-items: center; gap: 0.5rem; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 99px; padding: 0.35rem 0.9rem; font-size: 0.78rem; color: var(--muted); backdrop-filter: blur(12px); }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .status-dot.ok  { background: var(--ok);  box-shadow: 0 0 6px var(--ok-glow); }
+        .status-dot.err { background: var(--err); box-shadow: 0 0 6px var(--err-glow); }
+
+        .glass-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.25rem; backdrop-filter: blur(24px) saturate(160%); box-shadow: 0 2px 0 rgba(255,255,255,0.04) inset, 0 8px 32px rgba(0,0,0,0.28); transition: border-color 0.2s; }
+        .glass-card:hover { border-color: rgba(255,255,255,0.14); }
+
+        .card-title { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--subtle); margin-bottom: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .card-title::before { content: ''; display: inline-block; width: 3px; height: 12px; border-radius: 2px; background: linear-gradient(180deg, var(--accent), var(--accent-2)); }
+
+        .warn-banner { background: rgba(248,113,113,0.06); border: 1px solid var(--warn-border); border-radius: 10px; padding: 0.8rem 1rem; font-size: 0.84rem; color: #fca5a5; margin-bottom: 1.25rem; display: flex; align-items: flex-start; gap: 0.6rem; }
+        .warn-banner code { background: rgba(255,255,255,0.08); border-radius: 4px; padding: 0.05em 0.35em; font-size: 0.82em; }
+
+        /* ── Buttons ── */
+        .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1.2rem; font-size: 0.88rem; font-weight: 600; font-family: inherit; border: none; border-radius: 9px; cursor: pointer; transition: all 0.18s; letter-spacing: 0.01em; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; box-shadow: 0 4px 14px var(--accent-glow); }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px var(--accent-glow); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; box-shadow: 0 4px 14px rgba(239,68,68,0.35); }
+        .btn-danger:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(239,68,68,0.45); }
+        .btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none !important; }
+
+        /* ── Stats row ── */
+        .stats-row { display: flex; gap: 1.25rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+        .stat-box { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1rem 1.25rem; flex: 1; min-width: 10rem; }
+        .stat-value { font-size: 2rem; font-weight: 700; line-height: 1; }
+        .stat-value.warn { color: var(--err); }
+        .stat-value.ok   { color: var(--ok); }
+        .stat-label { font-size: 0.76rem; color: var(--subtle); margin-top: 0.3rem; }
+
+        /* ── Table ── */
+        .dup-table-wrap { border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; }
+        .dup-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+        .dup-table th { background: rgba(0,0,0,0.25); color: var(--subtle); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.6rem 1rem; text-align: left; border-bottom: 1px solid var(--glass-border); }
+        .dup-table td { padding: 0.6rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text); }
+        .dup-table tr:last-child td { border-bottom: none; }
+        .dup-table tr:hover td { background: rgba(99,102,241,0.05); }
+        .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 2rem; padding: 0.15rem 0.55rem; border-radius: 99px; font-size: 0.75rem; font-weight: 700; background: rgba(248,113,113,0.15); color: var(--err); border: 1px solid rgba(248,113,113,0.25); }
+
+        /* ── Result sections ── */
+        #analyse-section { display: none; }
+        #analyse-section.visible { display: block; }
+        #result-section  { display: none; }
+        #result-section.visible  { display: block; }
+
+        .result-ok  { color: var(--ok); font-size: 1rem; font-weight: 600; }
+        .result-err { color: var(--err); font-size: 1rem; font-weight: 600; }
+
+        @media (max-width: 640px) { .sidebar { display: none; } }
+    </style>
+</head>
+<body>
+<div class="bg-canvas"></div>
+
+<div class="app-shell">
+    {{ include('_sidebar.html.twig') }}
+
+    <div class="main-content">
+    <div class="page">
+
+        <header class="site-header">
+            <div class="brand-text">
+                <h1>Duplicate B2B User Mails</h1>
+                <p>Doppelte E-Mail-Adressen in middleware_merchants_user bereinigen</p>
+            </div>
+            <div class="status-pill">
+                <span class="status-dot {{ dbConfigured ? 'ok' : 'err' }}"></span>
+                {{ dbConfigured ? 'DB verbunden' : 'DB nicht konfiguriert' }}
+            </div>
+        </header>
+
+        {% if not dbConfigured %}
+            <div class="warn-banner">
+                <span>⚠</span>
+                <span>DB nicht konfiguriert. Bitte <code>PEGASUS_STAGING_DB_*</code> in <code>.env.local</code> setzen.</span>
+            </div>
+        {% endif %}
+
+        <!-- Action -->
+        <div class="glass-card">
+            <div class="card-title">Analyse &amp; Bereinigung</div>
+            <p style="font-size:0.84rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.7;">
+                Zuerst wird geprüft, wie viele doppelte E-Mail-Adressen existieren.<br>
+                Bei Duplikaten wird jeweils der älteste Eintrag (niedrigste ID) behalten und alle weiteren gelöscht.
+            </p>
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+                <button class="btn btn-primary" id="btn-analyse" type="button"
+                        {% if not dbConfigured %}disabled{% endif %}>
+                    🔍 Analyse starten
+                </button>
+                <button class="btn btn-danger" id="btn-cleanup" type="button" style="display:none;">
+                    🗑 Duplikate bereinigen
+                </button>
+            </div>
+        </div>
+
+        <!-- Analyse result -->
+        <div id="analyse-section">
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="stat-value" id="stat-email-count">0</div>
+                    <div class="stat-label">E-Mails mit Duplikaten</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="stat-extra-count">0</div>
+                    <div class="stat-label">Zu löschende Einträge</div>
+                </div>
+            </div>
+
+            <div class="glass-card" id="dup-table-card">
+                <div class="card-title">Betroffene E-Mails</div>
+                <div class="dup-table-wrap">
+                    <table class="dup-table">
+                        <thead>
+                            <tr>
+                                <th>E-Mail</th>
+                                <th style="text-align:right;">Einträge gesamt</th>
+                                <th style="text-align:right;">Zu löschen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dup-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cleanup result -->
+        <div class="glass-card" id="result-section">
+            <div class="card-title">Ergebnis</div>
+            <p id="result-text" style="font-size:0.95rem;"></p>
+        </div>
+
+    </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const urlAnalyse = {{ path('app_cleanup_analyse')|json_encode|raw }};
+    const urlExecute = {{ path('app_cleanup_execute')|json_encode|raw }};
+
+    const btnAnalyse     = document.getElementById('btn-analyse');
+    const btnCleanup     = document.getElementById('btn-cleanup');
+    const analyseSection = document.getElementById('analyse-section');
+    const resultSection  = document.getElementById('result-section');
+    const resultText     = document.getElementById('result-text');
+    const statEmail      = document.getElementById('stat-email-count');
+    const statExtra      = document.getElementById('stat-extra-count');
+    const dupTbody       = document.getElementById('dup-tbody');
+
+    btnAnalyse.addEventListener('click', async function () {
+        btnAnalyse.disabled = true;
+        btnAnalyse.textContent = 'Analysiert …';
+        analyseSection.classList.remove('visible');
+        resultSection.classList.remove('visible');
+        btnCleanup.style.display = 'none';
+
+        try {
+            const res  = await fetch(urlAnalyse, { method: 'POST', headers: { Accept: 'application/json' } });
+            const data = await res.json();
+            if (!data.ok) { alert('Fehler: ' + data.error); return; }
+
+            statEmail.textContent = data.emailCount;
+            statEmail.className   = 'stat-value ' + (data.emailCount > 0 ? 'warn' : 'ok');
+            statExtra.textContent = data.totalExtra;
+            statExtra.className   = 'stat-value ' + (data.totalExtra > 0 ? 'warn' : 'ok');
+
+            dupTbody.innerHTML = '';
+            if (data.duplicates.length === 0) {
+                dupTbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--ok);padding:1.5rem;">Keine Duplikate gefunden ✓</td></tr>';
+            } else {
+                data.duplicates.forEach(function (d) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td style="font-family:monospace;font-size:0.82rem;">' + escHtml(d.email) + '</td>' +
+                        '<td style="text-align:right;">' + d.count + '</td>' +
+                        '<td style="text-align:right;"><span class="badge">' + (d.count - 1) + '</span></td>';
+                    dupTbody.appendChild(tr);
+                });
+                btnCleanup.style.display = '';
+            }
+
+            analyseSection.classList.add('visible');
+        } catch (e) {
+            alert('Netzwerkfehler: ' + e);
+        } finally {
+            btnAnalyse.disabled = false;
+            btnAnalyse.textContent = '🔍 Erneut analysieren';
+        }
+    });
+
+    btnCleanup.addEventListener('click', async function () {
+        const extra = parseInt(statExtra.textContent, 10);
+        if (!confirm(extra + ' doppelte Einträge jetzt unwiderruflich löschen?')) return;
+
+        btnCleanup.disabled  = true;
+        btnAnalyse.disabled  = true;
+        btnCleanup.textContent = 'Bereinigt …';
+        resultSection.classList.remove('visible');
+
+        try {
+            const res  = await fetch(urlExecute, { method: 'POST', headers: { Accept: 'application/json' } });
+            const data = await res.json();
+
+            if (!data.ok) {
+                resultText.innerHTML = '<span class="result-err">Fehler: ' + escHtml(data.error || 'Unbekannt') + '</span>';
+            } else {
+                resultText.innerHTML = '<span class="result-ok">✓ ' + data.deleted + ' Einträge erfolgreich gelöscht.</span>';
+                btnCleanup.style.display = 'none';
+            }
+
+            resultSection.classList.add('visible');
+        } catch (e) {
+            resultText.innerHTML = '<span class="result-err">Netzwerkfehler: ' + escHtml(String(e)) + '</span>';
+            resultSection.classList.add('visible');
+        } finally {
+            btnCleanup.disabled  = false;
+            btnAnalyse.disabled  = false;
+            btnCleanup.textContent = '🗑 Duplikate bereinigen';
+        }
+    });
+
+    function escHtml(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+})();
+</script>
+</body>
+</html>

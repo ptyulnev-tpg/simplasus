@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pegasus Test Tools — Login</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --bg-base:     #0d1321;
+            --glass:       rgba(255,255,255,0.04);
+            --glass-border:rgba(255,255,255,0.09);
+            --text:        #f0f4ff;
+            --muted:       #8b9fc4;
+            --subtle:      #4d6082;
+            --accent:      #6366f1;
+            --accent-2:    #8b5cf6;
+            --accent-glow: rgba(99,102,241,0.35);
+            --err:         #f87171;
+            --orb-a:       rgba(99,102,241,0.18);
+            --orb-b:       rgba(139,92,246,0.14);
+            --orb-c:       rgba(34,211,238,0.10);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-base);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .bg-canvas {
+            position: fixed; inset: 0; z-index: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 10% 15%, var(--orb-a) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 70% at 90% 80%, var(--orb-b) 0%, transparent 65%),
+                radial-gradient(ellipse 50% 50% at 50% 50%, var(--orb-c) 0%, transparent 70%),
+                linear-gradient(160deg, #0d1321 0%, #111827 50%, #0f172a 100%);
+            animation: bgShift 18s ease-in-out infinite alternate;
+        }
+        @keyframes bgShift {
+            0%   { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(25deg); }
+        }
+
+        .login-wrap {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 22rem;
+            padding: 1.5rem;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        .brand-icon {
+            width: 2.6rem; height: 2.6rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 0 22px var(--accent-glow);
+        }
+        .brand-text h1 {
+            font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #e0e7ff, #a5b4fc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .brand-text p { font-size: 0.75rem; color: var(--muted); }
+
+        .card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 18px;
+            padding: 2rem;
+            backdrop-filter: blur(24px) saturate(160%);
+            box-shadow: 0 2px 0 rgba(255,255,255,0.04) inset, 0 12px 40px rgba(0,0,0,0.35);
+        }
+
+        .field { margin-bottom: 1.1rem; }
+        .field label { display: block; font-size: 0.78rem; font-weight: 500; color: var(--muted); margin-bottom: 0.45rem; }
+        .field input {
+            width: 100%;
+            padding: 0.65rem 0.9rem;
+            border-radius: 9px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(0,0,0,0.25);
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .field input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .field input::placeholder { color: var(--subtle); }
+
+        .error-box {
+            background: rgba(248,113,113,0.08);
+            border: 1px solid rgba(248,113,113,0.3);
+            border-radius: 8px;
+            padding: 0.65rem 0.9rem;
+            font-size: 0.82rem;
+            color: var(--err);
+            margin-bottom: 1.1rem;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 0.7rem;
+            font-size: 0.92rem;
+            font-weight: 600;
+            font-family: inherit;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #fff;
+            box-shadow: 0 4px 14px var(--accent-glow);
+            transition: all 0.18s;
+            margin-top: 0.4rem;
+        }
+        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px var(--accent-glow); }
+        .btn-submit:active { transform: translateY(0); }
+    </style>
+</head>
+<body>
+<div class="bg-canvas"></div>
+
+<div class="login-wrap">
+    <div class="brand">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-text">
+            <h1>Pegasus Test Tools</h1>
+            <p>Bitte anmelden um fortzufahren</p>
+        </div>
+    </div>
+
+    <div class="card">
+        {% if error %}
+            <div class="error-box">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+        {% endif %}
+
+        <form method="post">
+            <div class="field">
+                <label for="username">Benutzername</label>
+                <input type="text" id="username" name="_username"
+                       value="{{ lastUsername }}"
+                       autocomplete="username" autofocus>
+            </div>
+            <div class="field">
+                <label for="password">Passwort</label>
+                <input type="password" id="password" name="_password"
+                       autocomplete="current-password">
+            </div>
+            <button class="btn-submit" type="submit">Anmelden</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
