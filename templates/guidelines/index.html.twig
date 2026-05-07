@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pegasus — Guidelines</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --bg-base:      #0d1321;
+            --glass:        rgba(255,255,255,0.04);
+            --glass-hover:  rgba(255,255,255,0.07);
+            --glass-border: rgba(255,255,255,0.09);
+            --text:         #f0f4ff;
+            --muted:        #8b9fc4;
+            --subtle:       #4d6082;
+            --accent:       #6366f1;
+            --accent-2:     #8b5cf6;
+            --accent-glow:  rgba(99,102,241,0.35);
+            --ok:           #34d399;
+            --orb-a:        rgba(99,102,241,0.18);
+            --orb-b:        rgba(139,92,246,0.14);
+            --orb-c:        rgba(34,211,238,0.10);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-base);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .bg-canvas {
+            position: fixed; inset: 0; z-index: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 10% 15%, var(--orb-a) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 70% at 90% 80%, var(--orb-b) 0%, transparent 65%),
+                radial-gradient(ellipse 50% 50% at 50% 50%, var(--orb-c) 0%, transparent 70%),
+                linear-gradient(160deg, #0d1321 0%, #111827 50%, #0f172a 100%);
+            animation: bgShift 18s ease-in-out infinite alternate;
+        }
+        @keyframes bgShift { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(25deg); } }
+
+        .app-shell { position: relative; z-index: 1; display: flex; min-height: 100vh; }
+
+        /* ── Sidebar ── */
+        .sidebar { width: 220px; flex-shrink: 0; background: rgba(0,0,0,0.35); border-right: 1px solid var(--glass-border); backdrop-filter: blur(24px) saturate(160%); display: flex; flex-direction: column; padding: 1.5rem 0 2rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+        .sidebar-brand { display: flex; align-items: center; gap: 0.7rem; padding: 0 1.1rem 1.5rem; border-bottom: 1px solid var(--glass-border); margin-bottom: 1rem; }
+        .sidebar-brand-icon { width: 2rem; height: 2rem; border-radius: 8px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: flex; align-items: center; justify-content: center; font-size: 0.95rem; box-shadow: 0 0 14px var(--accent-glow); flex-shrink: 0; }
+        .sidebar-brand-text { font-size: 0.82rem; font-weight: 700; letter-spacing: -0.01em; background: linear-gradient(90deg, #e0e7ff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.2; }
+        .sidebar-section-label { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--subtle); padding: 0 1.1rem; margin-bottom: 0.4rem; }
+        .nav-item { display: flex; align-items: center; gap: 0.65rem; padding: 0.55rem 1.1rem; font-size: 0.84rem; font-weight: 500; color: var(--muted); text-decoration: none; transition: background 0.15s, color 0.15s; border-left: 3px solid transparent; }
+        .nav-item:hover { background: var(--glass-hover); color: var(--text); }
+        .nav-item.active { background: rgba(99,102,241,0.12); color: #c7d2fe; border-left-color: var(--accent); }
+        .nav-item-icon { font-size: 1rem; flex-shrink: 0; width: 1.2rem; text-align: center; }
+
+        .main-content { flex: 1; min-width: 0; }
+        .page { max-width: 58rem; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+        .site-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1rem; }
+        .brand-text h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; background: linear-gradient(90deg, #e0e7ff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .brand-text p { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
+
+        /* ── Tile grid ── */
+        .tile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+            gap: 1rem;
+        }
+
+        .tile {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 1.4rem 1.25rem;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s, transform 0.15s;
+            backdrop-filter: blur(24px) saturate(160%);
+            box-shadow: 0 2px 0 rgba(255,255,255,0.04) inset, 0 6px 24px rgba(0,0,0,0.25);
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+        .tile:hover {
+            border-color: var(--accent);
+            background: var(--glass-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 0 rgba(255,255,255,0.04) inset, 0 10px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(99,102,241,0.15);
+        }
+        .tile-icon {
+            font-size: 1.6rem;
+            line-height: 1;
+        }
+        .tile-name {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.3;
+        }
+        .tile-hint {
+            font-size: 0.72rem;
+            color: var(--subtle);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--subtle);
+            font-size: 0.9rem;
+        }
+
+        /* ── Modal ── */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(6px);
+            align-items: flex-start;
+            justify-content: center;
+            padding: 2rem 1rem;
+            overflow-y: auto;
+        }
+        .modal-backdrop.open { display: flex; }
+
+        .modal {
+            background: #111827;
+            border: 1px solid var(--glass-border);
+            border-radius: 18px;
+            width: 100%;
+            max-width: 52rem;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+            overflow: hidden;
+            position: relative;
+            margin: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.1rem 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.2);
+            gap: 1rem;
+        }
+        .modal-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--subtle);
+            font-size: 1.3rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0.2rem;
+            flex-shrink: 0;
+            transition: color 0.15s;
+        }
+        .modal-close:hover { color: var(--text); }
+
+        .modal-body {
+            padding: 2rem 2.5rem;
+            max-height: calc(100vh - 10rem);
+            overflow-y: auto;
+        }
+        .modal-body::-webkit-scrollbar { width: 5px; }
+        .modal-body::-webkit-scrollbar-track { background: transparent; }
+        .modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 99px; }
+
+        /* ── Markdown styles ── */
+        .md-content { color: var(--text); line-height: 1.8; }
+        .md-content h1 { font-size: 1.4rem; font-weight: 700; margin: 0 0 1.2rem; background: linear-gradient(90deg, #e0e7ff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .md-content h2 { font-size: 1.05rem; font-weight: 700; margin: 1.8rem 0 0.7rem; color: #c7d2fe; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.4rem; }
+        .md-content h3 { font-size: 0.92rem; font-weight: 600; margin: 1.2rem 0 0.5rem; color: var(--muted); }
+        .md-content p { margin: 0 0 1rem; color: var(--muted); }
+        .md-content strong { color: var(--text); font-weight: 600; }
+        .md-content code { font-family: 'SF Mono', ui-monospace, monospace; font-size: 0.82em; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; padding: 0.1em 0.4em; color: #a5b4fc; }
+        .md-content pre { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 1rem 1.2rem; overflow-x: auto; margin: 1rem 0; }
+        .md-content pre code { background: none; border: none; padding: 0; color: #e2e8f0; font-size: 0.82rem; }
+        .md-content ul, .md-content ol { padding-left: 1.5rem; margin: 0 0 1rem; color: var(--muted); }
+        .md-content li { margin-bottom: 0.3rem; }
+        .md-content hr { border: none; border-top: 1px solid var(--glass-border); margin: 1.5rem 0; }
+        .md-content table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem; }
+        .md-content th { background: rgba(0,0,0,0.3); color: var(--subtle); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.55rem 0.85rem; text-align: left; border-bottom: 1px solid var(--glass-border); }
+        .md-content td { padding: 0.55rem 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--muted); }
+        .md-content tr:last-child td { border-bottom: none; }
+        .md-content blockquote { border-left: 3px solid var(--accent); padding-left: 1rem; margin: 1rem 0; color: var(--subtle); font-style: italic; }
+
+        .modal-loading { text-align: center; padding: 3rem; color: var(--subtle); font-size: 0.9rem; }
+
+        @media (max-width: 640px) { .sidebar { display: none; } .tile-grid { grid-template-columns: 1fr; } .modal-body { padding: 1.25rem; } }
+    </style>
+</head>
+<body>
+<div class="bg-canvas"></div>
+
+<div class="app-shell">
+    {{ include('_sidebar.html.twig') }}
+
+    <div class="main-content">
+    <div class="page">
+
+        <header class="site-header">
+            <div class="brand-text">
+                <h1>Guidelines</h1>
+                <p>Vorlagen und Beispieldokumente</p>
+            </div>
+        </header>
+
+        {% if docs is empty %}
+            <div class="empty-state">
+                Keine Markdown-Dateien im <code>docs/</code>-Verzeichnis gefunden.
+            </div>
+        {% else %}
+            <div class="tile-grid">
+                {% for doc in docs %}
+                    <div class="tile" data-name="{{ doc.name|e('html_attr') }}">
+                        <div class="tile-icon">📄</div>
+                        <div class="tile-name">{{ doc.name|replace({'-': ' ', '_': ' '})|title }}</div>
+                        <div class="tile-hint">{{ doc.filename }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+    </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-backdrop" id="modal-backdrop">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title" id="modal-title"></span>
+            <button class="modal-close" id="modal-close" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="modal-content"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+(function () {
+    const urlContent  = {{ path('app_guidelines_content', {name: '__NAME__'})|json_encode|raw }};
+    const backdrop    = document.getElementById('modal-backdrop');
+    const modalTitle  = document.getElementById('modal-title');
+    const modalContent = document.getElementById('modal-content');
+    const modalClose  = document.getElementById('modal-close');
+
+    marked.setOptions({ breaks: true, gfm: true });
+
+    document.querySelectorAll('.tile').forEach(function (tile) {
+        tile.addEventListener('click', async function () {
+            const name = tile.dataset.name;
+            const url  = urlContent.replace('__NAME__', encodeURIComponent(name));
+
+            modalTitle.textContent = name.replace(/-|_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+            modalContent.innerHTML = '<div class="modal-loading">Lädt …</div>';
+            backdrop.classList.add('open');
+            document.body.style.overflow = 'hidden';
+
+            try {
+                const res  = await fetch(url, { headers: { Accept: 'application/json' } });
+                const data = await res.json();
+                if (!data.ok) { modalContent.innerHTML = '<p style="color:var(--err);">Fehler beim Laden.</p>'; return; }
+                const wrapper = document.createElement('div');
+                wrapper.className = 'md-content';
+                wrapper.innerHTML = marked.parse(data.content);
+                modalContent.innerHTML = '';
+                modalContent.appendChild(wrapper);
+            } catch (e) {
+                modalContent.innerHTML = '<p style="color:var(--err);">Netzwerkfehler: ' + e + '</p>';
+            }
+        });
+    });
+
+    function closeModal() {
+        backdrop.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    modalClose.addEventListener('click', closeModal);
+    backdrop.addEventListener('click', function (e) { if (e.target === backdrop) closeModal(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+})();
+</script>
+</body>
+</html>
